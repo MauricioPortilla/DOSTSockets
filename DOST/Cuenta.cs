@@ -5,18 +5,37 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace DOST {
-    class Cuenta {
+    public class Cuenta {
         private int id;
+        public int Id { get { return id; } set { id = value; } }
         private string usuario;
-        private string password; // cifrado con SHA1
+        public string Usuario { get { return usuario; } set { usuario = value; } }
+        private string password; // cifrada con SHA1
+        public string Password { get { return password; } set { password = value; } }
         private string correo;
+        public string Correo { get { return correo; } set { correo = value; } }
         private int monedas;
+        public int Monedas { get { return monedas; } set { monedas = value; } }
         private DateTime fechaCreacion;
         private bool confirmada;
         private string codigoValidacion;
 
         public Cuenta(int id) {
             this.id = id;
+            EngineNetwork.Send(EngineNetwork.CreatePackage(new object[] {
+                (byte) NetworkClientRequests.GetAccountData, id
+            }));
+            var accountData = EngineNetwork.ReceiveAsDictionary();
+            if (accountData.Count > 0) {
+                id = int.Parse(accountData["idcuenta"]);
+                usuario = accountData["usuario"];
+                password = accountData["password"];
+                correo = accountData["correo"];
+                monedas = int.Parse(accountData["monedas"]);
+                fechaCreacion = DateTime.Parse(accountData["fechaCreacion"]);
+                confirmada = (accountData["confirmado"] == "1") ? true : false;
+                codigoValidacion = accountData["codigoValidacion"];
+            }
         }
 
         public Cuenta(string usuario, string password) {
@@ -55,12 +74,20 @@ namespace DOST {
                     return false;
                 }
             }
-            Session.Cuenta = new Cuenta(
+            Session.Cuenta.id = int.Parse(packageReceived["idcuenta"]);
+            Session.Cuenta.usuario = packageReceived["usuario"];
+            Session.Cuenta.password = packageReceived["password"];
+            Session.Cuenta.correo = packageReceived["correo"];
+            Session.Cuenta.monedas = int.Parse(packageReceived["monedas"]);
+            Session.Cuenta.fechaCreacion = DateTime.Parse(packageReceived["fechaCreacion"]);
+            Session.Cuenta.confirmada = (packageReceived["confirmado"] == "1") ? true : false;
+            Session.Cuenta.codigoValidacion = packageReceived["codigoValidacion"];
+            /*Session.Cuenta = new Cuenta(
                 int.Parse(packageReceived["idcuenta"]), packageReceived["usuario"], packageReceived["password"],
                 packageReceived["correo"], int.Parse(packageReceived["monedas"]),
                 DateTime.Parse(packageReceived["fechaCreacion"]), (packageReceived["confirmado"] == "1") ? true : false,
                 packageReceived["codigoValidacion"]
-            );
+            );*/
             codeResponse = 1;
             return true;
         }
@@ -82,15 +109,6 @@ namespace DOST {
                 }
             }
             return true;
-        }
-
-        public int Id {
-            get {
-                return id;
-            }
-            set {
-                id = value;
-            }
         }
     }
 }

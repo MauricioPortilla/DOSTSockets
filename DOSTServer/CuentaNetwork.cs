@@ -122,5 +122,21 @@ namespace DOSTServer {
                 return false;
             }
         }
+
+        public static Dictionary<string, object> GetAccountData(int idcuenta) {
+            var accountData = new Dictionary<string, object>();
+            Database.ExecuteStoreQuery(
+                "SELECT * FROM cuenta WHERE idcuenta = @idcuenta",
+                new Dictionary<string, object>() {
+                    { "@idcuenta", idcuenta }
+                }, (results) => {
+                    var row = results[0];
+                    foreach (var columnData in row.Columns) {
+                        accountData.Add(columnData.Key, columnData.Value);
+                    }
+                }
+            );
+            return accountData;
+        }
     }
 }

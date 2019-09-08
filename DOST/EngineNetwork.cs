@@ -12,7 +12,10 @@ namespace DOST {
     enum NetworkClientRequests { // 0 a 50
         Logout = 0x00,
         Login = 0x01,
-        Register = 0x02
+        Register = 0x02,
+        GetGames = 0x03,
+        GetAccountData = 0x04,
+        GetGamePlayers = 0x05
     }
     enum NetworkServerResponses { // 50 en adelante
         LoginError = 0x33,
@@ -78,6 +81,7 @@ namespace DOST {
         }
 
         private static List<string> OpenPackage(byte[] package, int numBytes) {
+            // data1<$>data2<$>
             string content = Encoding.ASCII.GetString(package, 0, numBytes);
             List<string> openedPackage = new List<string>();
             foreach (string contentPart in content.Split("<$>".ToCharArray())) {
@@ -89,6 +93,7 @@ namespace DOST {
         }
 
         private static Dictionary<string, string> OpenPackageAsDictionary(byte[] package, int numBytes) {
+            // usuario<#>Frey<$>password<#>value<$>
             string content = Encoding.ASCII.GetString(package, 0, numBytes);
             Dictionary<string, string> openedPackage = new Dictionary<string, string>();
             string[] packageSegment = Regex.Split(content, @"(<\$>)");
@@ -100,6 +105,34 @@ namespace DOST {
                     }
                     openedPackage.Add(contentPairKeyValue[0], contentPairKeyValue[2]);
                 }
+            }
+            return openedPackage;
+        }
+
+        private static List<Dictionary<string, string>> OpenPackageAsMultipleData(byte[] package, int numBytes) {
+            // usuario<#>Frey<$>password<#>value<$><&>usuario<#>Freya<$>password<#>value2<$><&>
+            string content = Encoding.ASCII.GetString(package, 0, numBytes);
+            List<Dictionary<string, string>> openedPackage = new List<Dictionary<string, string>>();
+            List<string> packageSegment = Regex.Split(content, @"(<&>)").ToList();
+            packageSegment.RemoveAll(x => x == "<&>");
+            foreach (string dataCollection in packageSegment) {
+                if (string.IsNullOrWhiteSpace(dataCollection) || dataCollection == "<&>") {
+                    continue;
+                }
+                Dictionary<string, string> dataCollectionPackage = new Dictionary<string, string>();
+                List<string> segment = Regex.Split(dataCollection, @"(<\$>)").ToList();
+                segment.RemoveAll(x => x == "<$>");
+                foreach (string dataPart in segment) {
+                    if (!string.IsNullOrWhiteSpace(dataPart)) {
+                        List<string> contentPairKeyValue = Regex.Split(dataPart, @"(<#>)").ToList();
+                        contentPairKeyValue.RemoveAll(x => x == "<#>");
+                        if (contentPairKeyValue.Count < 2) {
+                            continue;
+                        }
+                        dataCollectionPackage.Add(contentPairKeyValue[0], contentPairKeyValue[1]);
+                    }
+                }
+                openedPackage.Add(dataCollectionPackage);
             }
             return openedPackage;
         }
@@ -120,6 +153,16 @@ namespace DOST {
                 int bytesReceived = sender.Receive(buffer);
                 if (bytesReceived > 0) {
                     return OpenPackageAsDictionary(buffer, bytesReceived);
+                }
+            }
+        }
+
+        public static List<Dictionary<string, string>> ReceiveMultipleData() {
+            byte[] buffer = new byte[1024];
+            while (true) {
+                int bytesReceived = sender.Receive(buffer);
+                if (bytesReceived > 0) {
+                    return OpenPackageAsMultipleData(buffer, bytesReceived);
                 }
             }
         }

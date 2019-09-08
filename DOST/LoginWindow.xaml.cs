@@ -31,7 +31,10 @@ namespace DOST {
             Session.Cuenta = new Cuenta(usernameTextBox.Text, passwordPasswordBox.Password);
             byte codeResponse = 0;
             if (Session.Cuenta.Login(out codeResponse)) {
-                MessageBox.Show("Inicio de sesión exitoso.");
+                MainMenuWindow mainMenu = new MainMenuWindow();
+                Session.MainMenu = mainMenu;
+                mainMenu.Show();
+                Hide();
             } else {
                 switch (codeResponse) {
                     case (byte) NetworkServerResponses.AccountNotConfirmed:

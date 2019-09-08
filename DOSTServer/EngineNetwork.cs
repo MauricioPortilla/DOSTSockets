@@ -9,7 +9,10 @@ namespace DOSTServer {
     enum NetworkClientRequests { // 0 a 50
         Logout = 0x00,
         Login = 0x01,
-        Register = 0x02
+        Register = 0x02,
+        GetGames = 0x03,
+        GetAccountData = 0x04,
+        GetGamePlayers = 0x05
     }
     enum NetworkServerResponses { // 50 en adelante
         LoginError = 0x33,
@@ -65,6 +68,15 @@ namespace DOSTServer {
                     case (byte) NetworkClientRequests.Register:
                         ClientRegisterRequest(clientSocket, content);
                         break;
+                    case (byte) NetworkClientRequests.GetGames:
+                        ClientGetGamesRequest(clientSocket);
+                        break;
+                    case (byte) NetworkClientRequests.GetAccountData:
+                        ClientGetAccountData(clientSocket, content);
+                        break;
+                    case (byte) NetworkClientRequests.GetGamePlayers:
+                        ClientGetGamePlayers(clientSocket, content);
+                        break;
                 }
             }
             clientSocket.Shutdown(SocketShutdown.Both);
@@ -99,6 +111,20 @@ namespace DOSTServer {
             Send(clientSocket, serverResponse);
         }
 
+        private static void ClientGetGamesRequest(Socket clientSocket) {
+            var gamesDataPackage = CreatePackage(PartidaNetwork.GetGames());
+            Send(clientSocket, gamesDataPackage);
+        }
+
+        private static void ClientGetAccountData(Socket clientSocket, List<string> content) {
+            var accountDataPackage = CreatePackage(CuentaNetwork.GetAccountData(int.Parse(content[1])));
+            Send(clientSocket, accountDataPackage);
+        }
+
+        private static void ClientGetGamePlayers(Socket clientSocket, List<string> content) {
+            var playersDataPackage = CreatePackage(PartidaNetwork.GetPlayersData(int.Parse(content[1])));
+            Send(clientSocket, playersDataPackage);
+        }
 
         public static void Send(Socket client, string message) {
             try {
@@ -151,6 +177,20 @@ namespace DOSTServer {
                 package.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes("<#>")));
                 package.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(pair.Value.ToString())));
                 package.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes("<$>")));
+            }
+            return package;
+        }
+
+        public static IList<ArraySegment<byte>> CreatePackage(List<Dictionary<string, object>> data) {
+            IList<ArraySegment<byte>> package = new List<ArraySegment<byte>>();
+            foreach (Dictionary<string, object> objectData in data) {
+                foreach (KeyValuePair<string, object> pair in objectData) {
+                    package.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(pair.Key)));
+                    package.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes("<#>")));
+                    package.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(pair.Value.ToString())));
+                    package.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes("<$>")));
+                }
+                package.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes("<&>")));
             }
             return package;
         }
