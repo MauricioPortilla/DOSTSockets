@@ -105,7 +105,8 @@ namespace DOSTServer {
                 mail.Subject = "Activa tu cuenta en DOST";
                 mail.IsBodyHtml = true;
                 mail.Body = "<h3>¡Bienvenido a DOST!</h3><br>" +
-                    "Da clic <a href=\"https://www.arkanapp.com/dost.php?validationcode=" + codigoValidacion + "\" target=\"_blank\">AQUÍ</a> para activar tu cuenta." +
+                    "Da clic <a href=\"https://www.arkanapp.com/dost/dost.php?validationcode=" + 
+                    codigoValidacion + "\" target=\"_blank\">AQUÍ</a> para activar tu cuenta." +
                     "<br><br>¡Diviértete!<br>-El equipo de DOST";
                 int port = 587;
                 if (int.TryParse(xmlElements["Smtp"]["Port"], out port)) {

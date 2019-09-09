@@ -82,12 +82,6 @@ namespace DOST {
             Session.Cuenta.fechaCreacion = DateTime.Parse(packageReceived["fechaCreacion"]);
             Session.Cuenta.confirmada = (packageReceived["confirmado"] == "1") ? true : false;
             Session.Cuenta.codigoValidacion = packageReceived["codigoValidacion"];
-            /*Session.Cuenta = new Cuenta(
-                int.Parse(packageReceived["idcuenta"]), packageReceived["usuario"], packageReceived["password"],
-                packageReceived["correo"], int.Parse(packageReceived["monedas"]),
-                DateTime.Parse(packageReceived["fechaCreacion"]), (packageReceived["confirmado"] == "1") ? true : false,
-                packageReceived["codigoValidacion"]
-            );*/
             codeResponse = 1;
             return true;
         }
