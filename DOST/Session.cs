@@ -9,13 +9,18 @@ using System.Threading.Tasks;
 namespace DOST {
     class Session {
         private static Cuenta cuenta;
-        private static readonly ObservableCollection<Partida> gamesList = new ObservableCollection<Partida>();
         public static Cuenta Cuenta { get; set; }
         private static MainMenuWindow mainMenu;
         public static MainMenuWindow MainMenu {
             get { return mainMenu; }
             set { mainMenu = value; }
         }
+        private static LoginWindow login;
+        public static LoginWindow Login {
+            get { return login; }
+            set { login = value; }
+        }
+        private static readonly ObservableCollection<Partida> gamesList = new ObservableCollection<Partida>();
         public static ObservableCollection<Partida> GamesList {
             get {
                 return gamesList;

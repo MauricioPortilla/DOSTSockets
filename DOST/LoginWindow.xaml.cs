@@ -20,7 +20,6 @@ namespace DOST {
     public partial class LoginWindow : Window {
         public LoginWindow() {
             InitializeComponent();
-            EngineNetwork.EstablishConnection();
         }
 
         private void LoginButton_Click(object sender, RoutedEventArgs e) {
@@ -28,11 +27,14 @@ namespace DOST {
                 MessageBox.Show("Faltan campos por completar");
                 return;
             }
+            EngineNetwork.EstablishConnection();
             Session.Cuenta = new Cuenta(usernameTextBox.Text, passwordPasswordBox.Password);
             byte codeResponse = 0;
             if (Session.Cuenta.Login(out codeResponse)) {
                 MainMenuWindow mainMenu = new MainMenuWindow();
                 Session.MainMenu = mainMenu;
+                Session.Login = this;
+                passwordPasswordBox.Password = "";
                 mainMenu.Show();
                 Hide();
             } else {

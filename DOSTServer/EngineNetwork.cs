@@ -59,6 +59,7 @@ namespace DOSTServer {
                 List<string> content = OpenPackage(bufferMsg, numBytes);
                 byte codeRequest = byte.Parse(content[0]);
                 if (codeRequest == (byte) NetworkClientRequests.Logout) {
+                    ClientLogoutRequest(clientSocket, content);
                     break;
                 }
                 switch (codeRequest) {
@@ -82,7 +83,7 @@ namespace DOSTServer {
             clientSocket.Shutdown(SocketShutdown.Both);
             clientSocket.Close();
             clients.Remove(clientSocket);
-            Console.WriteLine("Client connection closed.");
+            Console.WriteLine(">> User has logged out.");
         }
 
         private static void ClientLoginRequest(Socket clientSocket, List<string> content) {
@@ -124,6 +125,10 @@ namespace DOSTServer {
         private static void ClientGetGamePlayers(Socket clientSocket, List<string> content) {
             var playersDataPackage = CreatePackage(PartidaNetwork.GetPlayersData(int.Parse(content[1])));
             Send(clientSocket, playersDataPackage);
+        }
+
+        private static void ClientLogoutRequest(Socket clientSocket, List<string> content) {
+            // REMOVE FROM JUGADOR'S TABLE
         }
 
         public static void Send(Socket client, string message) {

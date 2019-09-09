@@ -104,5 +104,12 @@ namespace DOST {
             }
             return true;
         }
+
+        public void Logout() {
+            var logoutRequest = EngineNetwork.CreatePackage(new object[] {
+                (byte) NetworkClientRequests.Logout, id
+            });
+            EngineNetwork.Send(logoutRequest);
+        }
     }
 }

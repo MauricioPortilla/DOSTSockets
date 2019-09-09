@@ -42,5 +42,19 @@ namespace DOST {
         void GamesList_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
             gamesListView.Items.Refresh();
         }
+
+        private void JoinGameButton_Click(object sender, RoutedEventArgs e) {
+
+        }
+
+        private void BestScoresButton_Click(object sender, RoutedEventArgs e) {
+
+        }
+
+        private void LogoutButton_Click(object sender, RoutedEventArgs e) {
+            Session.Cuenta.Logout();
+            Session.Login.Show();
+            Close();
+        }
     }
 }

@@ -30,5 +30,8 @@
                 </GridView>
             </ListView.View>
         </ListView>
+        <Button x:Name="joinGameButton"  Style="{StaticResource MaterialDesignRaisedDarkButton}" Content="{x:Static p:Resources.JoinGameButton}" Margin="861,636,49,19" Click="JoinGameButton_Click"/>
+        <Button x:Name="bestScoresButton"  Style="{StaticResource MaterialDesignRaisedDarkButton}" Content="{x:Static p:Resources.BestScoresButton}" Margin="47,636,851,19" Click="BestScoresButton_Click"/>
+        <Button x:Name="logoutButton"  Style="{StaticResource MaterialDesignRaisedDarkButton}" Content="{x:Static p:Resources.LogoutButton}" Margin="872,134,38,521" Click="LogoutButton_Click"/>
     </Grid>
 </Window>
