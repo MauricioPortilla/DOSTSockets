@@ -61,6 +61,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="GameLobbyWindow.xaml.cs">
+      <DependentUpon>GameLobbyWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Jugador.cs" />
     <Compile Include="MainMenuWindow.xaml.cs">
       <DependentUpon>MainMenuWindow.xaml</DependentUpon>
@@ -75,6 +78,10 @@
       <DependentUpon>RegisterWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Session.cs" />
+    <Page Include="GameLobbyWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="LoginWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -136,6 +143,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\DOST_MainMenu.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\DOST_GameLobby.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

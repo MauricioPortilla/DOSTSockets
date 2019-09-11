@@ -111,5 +111,28 @@ namespace DOST {
             });
             EngineNetwork.Send(logoutRequest);
         }
+
+        public bool JoinGame(Partida game) {
+            var joinGameRequest = EngineNetwork.CreatePackage(new object[] {
+                (byte) NetworkClientRequests.JoinGame, id, game.Id, 
+            });
+            EngineNetwork.Send(joinGameRequest);
+            List<string> packageReceived = EngineNetwork.Receive();
+            if (packageReceived.Count == 0) {
+                return false;
+            } else if (packageReceived.Count == 1) {
+                if (byte.Parse(packageReceived[0]) != (byte) NetworkServerResponses.PlayerJoined) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public void SendChatMessage(Partida game, string message) {
+            var sendChatMessageRequest = EngineNetwork.CreatePackage(new object[] {
+                (byte) NetworkClientRequests.SendChatMessage, game.Id, usuario, message
+            });
+            EngineNetwork.Send(sendChatMessageRequest);
+        }
     }
 }

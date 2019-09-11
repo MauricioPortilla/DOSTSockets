@@ -4,12 +4,16 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DOST {
     class Session {
         private static Cuenta cuenta;
-        public static Cuenta Cuenta { get; set; }
+        public static Cuenta Cuenta {
+            get { return cuenta; }
+            set { cuenta = value; }
+        }
         private static MainMenuWindow mainMenu;
         public static MainMenuWindow MainMenu {
             get { return mainMenu; }
@@ -28,7 +32,7 @@ namespace DOST {
         }
 
         public static void GetGamesList() {
-            while (true) {
+            while (cuenta != null) {
                 EngineNetwork.Send(EngineNetwork.CreatePackage(new object[] {
                     (byte) NetworkClientRequests.GetGames
                 }));

@@ -4,6 +4,7 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Linq;
 
 namespace DOSTServer {
     enum NetworkClientRequests { // 0 a 50
@@ -12,18 +13,23 @@ namespace DOSTServer {
         Register = 0x02,
         GetGames = 0x03,
         GetAccountData = 0x04,
-        GetGamePlayers = 0x05
+        GetGamePlayers = 0x05,
+        JoinGame = 0x06,
+        SendChatMessage = 0x07
     }
     enum NetworkServerResponses { // 50 en adelante
         LoginError = 0x33,
         RegisterError = 0x34,
         RegisterSuccess = 0x35,
-        AccountNotConfirmed = 0x36
+        AccountNotConfirmed = 0x36,
+        PlayerJoined = 0x37,
+        ChatMessage = 0x38
     }
 
     class EngineNetwork {
         private static readonly int MAX_NUMBER_CONNECTIONS = 4;
-        private static readonly List<Socket> clients = new List<Socket>();
+        private static readonly Dictionary<Socket, int> clients = new Dictionary<Socket, int>();
+
         public static void InitializeServer() {
             Console.WriteLine("DOST Server");
             Console.WriteLine(">> Establishing connection...\n");
@@ -40,7 +46,7 @@ namespace DOSTServer {
                 Console.WriteLine(">> Server is online.");
                 while (true) {
                     Socket clientSocket = listener.Accept();
-                    clients.Add(clientSocket);
+                    clients.Add(clientSocket, 0);
                     Console.WriteLine(">> Client connected: " + (clientSocket.RemoteEndPoint as IPEndPoint).Address.ToString());
 
                     Thread clientRequestsThread = new Thread(ProcessClientRequests);
@@ -78,6 +84,12 @@ namespace DOSTServer {
                     case (byte) NetworkClientRequests.GetGamePlayers:
                         ClientGetGamePlayers(clientSocket, content);
                         break;
+                    case (byte) NetworkClientRequests.JoinGame:
+                        ClientJoinGameRequest(clientSocket, content);
+                        break;
+                    case (byte) NetworkClientRequests.SendChatMessage:
+                        ClientSendChatMessageRequest(clientSocket, content);
+                        break;
                 }
             }
             clientSocket.Shutdown(SocketShutdown.Both);
@@ -100,6 +112,7 @@ namespace DOSTServer {
                 IList<ArraySegment<byte>> accountDataPackage = CreatePackage(accountData);
                 Send(clientSocket, accountDataPackage);
                 Console.WriteLine(">> " + accountData["usuario"] + " has logged in.");
+                clients[clientSocket] = (int) accountData["idcuenta"];
             }
         }
 
@@ -128,7 +141,27 @@ namespace DOSTServer {
         }
 
         private static void ClientLogoutRequest(Socket clientSocket, List<string> content) {
-            // REMOVE FROM JUGADOR'S TABLE
+            CuentaNetwork.Logout(int.Parse(content[1]));
+        }
+
+        private static void ClientJoinGameRequest(Socket clientSocket, List<string> content) {
+            CuentaNetwork.JoinGame(int.Parse(content[1]), int.Parse(content[2]), false);
+            Send(clientSocket, CreatePackage(new object[] {
+                (byte) NetworkServerResponses.PlayerJoined
+            }));
+        }
+
+        private static void ClientSendChatMessageRequest(Socket clientSocket, List<string> content) {
+            // [codigo, idpartida, usuario, mensaje]
+            var playersData = PartidaNetwork.GetPlayersData(int.Parse(content[1]));
+            var chatMessagePackage = CreatePackage(new Dictionary<string, object>() {
+                { "code", (byte) NetworkServerResponses.ChatMessage }, { "username", content[2] }, { "message", content[3] }
+            });
+            foreach (var playerData in playersData) {
+                if (clients.ContainsValue((int) playerData["idcuenta"])) {
+                    Send(clients.FirstOrDefault(x => x.Value == (int) playerData["idcuenta"]).Key, chatMessagePackage);
+                }
+            }
         }
 
         public static void Send(Socket client, string message) {

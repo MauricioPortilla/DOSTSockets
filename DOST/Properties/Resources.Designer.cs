@@ -97,6 +97,15 @@ namespace DOST.Properties {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a Bienvenido al chat del lobby de DOST..
+        /// </summary>
+        public static string ChatWelcomeText {
+            get {
+                return ResourceManager.GetString("ChatWelcomeText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Monedas.
         /// </summary>
         public static string CoinsText {
@@ -243,9 +252,9 @@ namespace DOST.Properties {
         /// <summary>
         ///   Busca una cadena traducida similar a Lobby - DOST.
         /// </summary>
-        public static string LobbieWindowTitle {
+        public static string LobbyWindowTitle {
             get {
-                return ResourceManager.GetString("LobbieWindowTitle", resourceCulture);
+                return ResourceManager.GetString("LobbyWindowTitle", resourceCulture);
             }
         }
         

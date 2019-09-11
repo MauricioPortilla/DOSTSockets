@@ -177,7 +177,7 @@
   <data name="LetterSelectionWindowTitle" xml:space="preserve">
     <value>Selección de letra</value>
   </data>
-  <data name="LobbieWindowTitle" xml:space="preserve">
+  <data name="LobbyWindowTitle" xml:space="preserve">
     <value>Lobby - DOST</value>
   </data>
   <data name="LoginButton" xml:space="preserve">
@@ -242,5 +242,8 @@
   </data>
   <data name="WaitingForPlayerText" xml:space="preserve">
     <value>Esperando jugador</value>
+  </data>
+  <data name="ChatWelcomeText" xml:space="preserve">
+    <value>Bienvenido al chat del lobby de DOST.</value>
   </data>
 </root>

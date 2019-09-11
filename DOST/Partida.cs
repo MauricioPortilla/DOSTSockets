@@ -16,13 +16,18 @@ namespace DOST {
         private int ronda;
         private DateTime fecha;
         private List<Jugador> jugadores;
+        public List<Jugador> Jugadores {
+            get {
+                return jugadores;
+            }
+        }
         public string Nombre { get; }
         private int numeroJugadores;
-        public int NumeroJugadores {
+        public string NumeroJugadores {
             get {
-                return numeroJugadores;
+                return numeroJugadores + "/4";
             } set {
-                numeroJugadores = value;
+                numeroJugadores = int.Parse(value);
                 NotifyPropertyChanged("NumeroJugadores");
             }
         }
@@ -51,8 +56,8 @@ namespace DOST {
                     (player["anfitrion"] == "1") ? true : false
                 ));
             }
-            if (NumeroJugadores != jugadores.Count) {
-                NumeroJugadores = jugadores.Count;
+            if (numeroJugadores != jugadores.Count) {
+                NumeroJugadores = jugadores.Count.ToString();
             }
         }
 

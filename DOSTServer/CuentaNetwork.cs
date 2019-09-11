@@ -82,7 +82,9 @@ namespace DOSTServer {
                 );
                 dostWebRequest.Method = "GET";
                 response = (HttpWebResponse) dostWebRequest.GetResponse();
-                using (StreamReader dostStreamReader = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding(response.CharacterSet))) {
+                using (StreamReader dostStreamReader = new StreamReader(
+                    response.GetResponseStream(), Encoding.GetEncoding(response.CharacterSet)
+                )) {
                     result = dostStreamReader.ReadToEnd();
                 }
             } catch (WebException webException) {
@@ -138,6 +140,26 @@ namespace DOSTServer {
                 }
             );
             return accountData;
+        }
+
+        public static void Logout(int idcuenta) {
+            Database.ExecuteUpdate(
+                "DELETE FROM jugador WHERE idcuenta = @idcuenta AND " +
+                "idpartida IN (SELECT idpartida FROM partida WHERE ronda < 5)",
+                new Dictionary<string, object>() {
+                    { "@idcuenta", idcuenta }
+                }
+            );
+        }
+
+        public static void JoinGame(int idcuenta, int idpartida, bool anfitrion) {
+            Database.ExecuteUpdate(
+                "INSERT INTO jugador VALUES (@idcuenta, @idpartida, 0, @anfitrion)",
+                new Dictionary<string, object>() {
+                    { "@idcuenta", idcuenta }, { "@idpartida", idpartida },
+                    { "@anfitrion", (anfitrion == true) ? 1 : 0 }
+                }
+            );
         }
     }
 }

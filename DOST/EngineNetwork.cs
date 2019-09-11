@@ -15,13 +15,17 @@ namespace DOST {
         Register = 0x02,
         GetGames = 0x03,
         GetAccountData = 0x04,
-        GetGamePlayers = 0x05
+        GetGamePlayers = 0x05,
+        JoinGame = 0x06,
+        SendChatMessage = 0x07
     }
     enum NetworkServerResponses { // 50 en adelante
         LoginError = 0x33,
         RegisterError = 0x34,
         RegisterSuccess = 0x35,
-        AccountNotConfirmed = 0x36
+        AccountNotConfirmed = 0x36,
+        PlayerJoined = 0x37,
+        ChatMessage = 0x38
     }
 
     class EngineNetwork {
@@ -96,14 +100,16 @@ namespace DOST {
             // usuario<#>Frey<$>password<#>value<$>
             string content = Encoding.ASCII.GetString(package, 0, numBytes);
             Dictionary<string, string> openedPackage = new Dictionary<string, string>();
-            string[] packageSegment = Regex.Split(content, @"(<\$>)");
+            List<string> packageSegment = Regex.Split(content, @"(<\$>)").ToList();
+            packageSegment.RemoveAll(x => x == "<$>");
             foreach (string contentPart in packageSegment) {
                 if (!string.IsNullOrWhiteSpace(contentPart)) {
-                    string[] contentPairKeyValue = Regex.Split(contentPart, @"(<#>)");
-                    if (contentPairKeyValue.Length < 2) {
+                    List<string> contentPairKeyValue = Regex.Split(contentPart, @"(<#>)").ToList();
+                    contentPairKeyValue.RemoveAll(x => x == "<#>");
+                    if (contentPairKeyValue.Count < 2) {
                         continue;
                     }
-                    openedPackage.Add(contentPairKeyValue[0], contentPairKeyValue[2]);
+                    openedPackage.Add(contentPairKeyValue[0], contentPairKeyValue[1]);
                 }
             }
             return openedPackage;
