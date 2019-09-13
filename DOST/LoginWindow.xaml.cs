@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,6 +21,8 @@ namespace DOST {
     public partial class LoginWindow : Window {
         public LoginWindow() {
             InitializeComponent();
+            var language = Session.LANGUAGES.FirstOrDefault(x => x.Value == App.GetAppConfiguration()["DOST"]["Language"]).Key;
+            languageSelectorComboBox.SelectedValue = language;
         }
 
         private void LoginButton_Click(object sender, RoutedEventArgs e) {
@@ -52,6 +55,11 @@ namespace DOST {
         private void RegisterButton_Click(object sender, RoutedEventArgs e) {
             var registerWindow = new RegisterWindow();
             registerWindow.Show();
+        }
+
+        private void LanguageSelectorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            App.ChangeLanguage(Session.LANGUAGES[((ListBoxItem) e.AddedItems[0]).Content.ToString()]);
+            MessageBox.Show("Idioma cambiado. Reinicie el juego para aplicar los cambios.");
         }
     }
 }

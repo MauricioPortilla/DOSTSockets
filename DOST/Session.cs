@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -9,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace DOST {
     class Session {
+        public static readonly Dictionary<string, string> LANGUAGES = new Dictionary<string, string>() {
+            { "Español", "es-MX" }, { "English", "en-US" }
+        };
         private static Cuenta cuenta;
         public static Cuenta Cuenta {
             get { return cuenta; }
@@ -29,6 +33,12 @@ namespace DOST {
             get {
                 return gamesList;
             }
+        }
+
+        public static void ChangeLanguage(string language) {
+            var culture = new CultureInfo(language);
+            CultureInfo.DefaultThreadCurrentCulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
         }
 
         public static void GetGamesList() {

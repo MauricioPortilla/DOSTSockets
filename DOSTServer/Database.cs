@@ -41,58 +41,64 @@ namespace DOSTServer {
 			sql.Close();
 		}
 
-		public static bool ExecuteUpdate(string query, Dictionary<string, object> args, Action<Exception> OnFail = null) {
-			try {
-				sql.Open();
-				SqlDataAdapter cmd = new SqlDataAdapter {
-					InsertCommand = new SqlCommand(query, sql)
-				};
-				if (args != null) {
-					foreach (var arg in args) {
-                        Console.WriteLine("Arg Complex: " + arg.Key + " | Val: " + arg.Value);
-                        cmd.InsertCommand.Parameters.AddWithValue(arg.Key, arg.Value);
-					}
-				}
-				cmd.InsertCommand.ExecuteNonQuery();
-				sql.Close();
+        public static bool ExecuteUpdate(string query, Dictionary<string, object> queryArguments, Action<Exception> onFail = null) {
+            try {
+                sql.Open();
+                SqlDataAdapter command = new SqlDataAdapter {
+                    InsertCommand = new SqlCommand(query, sql)
+                };
+                if (queryArguments != null) {
+                    foreach (var queryArgument in queryArguments) {
+                        command.InsertCommand.Parameters.AddWithValue(queryArgument.Key, queryArgument.Value);
+                    }
+                }
+                command.InsertCommand.ExecuteNonQuery();
+                sql.Close();
                 return true;
-			} catch (Exception e) {
-				if(OnFail != null) {
-					OnFail.Invoke(e);
-				}
+            } catch (SqlException sqlException) {
+                Console.WriteLine("SQLException -> " + sqlException.Message);
+                if (onFail != null) {
+                    onFail.Invoke(sqlException);
+                }
+            } catch (Exception e) {
 				Console.WriteLine("EXCEPTION ERROR CQ -> " + e.Message.ToString());
-                return false;
-			}
-		}
+                if (onFail != null) {
+                    onFail.Invoke(e);
+                }
+            }
+            if (sql.State == System.Data.ConnectionState.Open) {
+                sql.Close();
+            }
+            return false;
+        }
 
 		public static List<DatabaseStruct.SSQLRow> ExecuteStoreQuery(
-			string query, Dictionary<string, object> args, 
+			string query, Dictionary<string, object> queryArguments, 
 			Action<List<DatabaseStruct.SSQLRow>> action, Func<bool> zeroResults = null
 		) {
 			try {
 				sql.Open();
 				List<DatabaseStruct.SSQLRow> result = new List<DatabaseStruct.SSQLRow>();
-				SqlCommand cmd = new SqlCommand(query, sql);
-				if (args != null) {
-					foreach (var arg in args) {
-						// Console.WriteLine("Arg: " + arg.Key + " | Val: " + arg.Value);
-						cmd.Parameters.AddWithValue(arg.Key, arg.Value);
+				SqlCommand command = new SqlCommand(query, sql);
+				if (queryArguments != null) {
+					foreach (var queryArgument in queryArguments) {
+						command.Parameters.AddWithValue(queryArgument.Key, queryArgument.Value);
 					}
 				}
-				using (SqlDataReader reader = cmd.ExecuteReader()) {
-					var read = reader.Read();
-					while (read) {
-						DatabaseStruct.SSQLRow s = new DatabaseStruct.SSQLRow(new Dictionary<string, object>());
-						for (int i = 0; i < reader.FieldCount; i++) {
+				using (SqlDataReader reader = command.ExecuteReader()) {
+					var dataReader = reader.Read();
+					while (dataReader) {
+						DatabaseStruct.SSQLRow row = new DatabaseStruct.SSQLRow(new Dictionary<string, object>());
+						for (int index = 0; index < reader.FieldCount; index++) {
 							try {
-								s.Columns.Add(reader.GetName(i), reader.GetValue(i));
+								row.Columns.Add(reader.GetName(index), reader.GetValue(index));
 							} catch (IndexOutOfRangeException) {
 								Console.WriteLine("Catch Exception");
 								break;
 							}
 						}
-						result.Add(s);
-						read = reader.Read();
+						result.Add(row);
+						dataReader = reader.Read();
 					}
 				}
 				sql.Close();
@@ -104,13 +110,15 @@ namespace DOSTServer {
 						zeroResults.Invoke();
 				}
 				return result;
-			} catch (Exception e) {
-				if(sql.State == System.Data.ConnectionState.Open) {
-					sql.Close();
-				}
+			} catch (SqlException sqlException) {
+                Console.WriteLine("SQLException -> " + sqlException.Message);
+            } catch (Exception e) {
                 Console.WriteLine("EXCEPTION ERROR SQ -> " + e.Message.ToString());
-				return new List<DatabaseStruct.SSQLRow>();
             }
+            if (sql.State == System.Data.ConnectionState.Open) {
+                sql.Close();
+            }
+            return new List<DatabaseStruct.SSQLRow>();
         }
 	}
 }

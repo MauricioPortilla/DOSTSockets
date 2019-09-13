@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.28307.757
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DOST", "DOST\DOST.csproj", "{584CA0A9-D372-4033-A557-862D9DCEBB3C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DOSTServer", "DOSTServer\DOSTServer.csproj", "{74C4CB8C-B524-4209-8488-6094038A5FDD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DOSTServer", "DOSTServer\DOSTServer.csproj", "{74C4CB8C-B524-4209-8488-6094038A5FDD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
