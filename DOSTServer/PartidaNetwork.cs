@@ -5,9 +5,15 @@ using System.Text;
 namespace DOSTServer {
     static class PartidaNetwork {
         public static List<Dictionary<string, object>> GetGames() {
-            List<Dictionary<string, object>> gamesData = new List<Dictionary<string, object>>();
+            List<Dictionary<string, object>> gamesData = new List<Dictionary<string, object>>() {
+                { new Dictionary<string, object>() {
+                    { "code", (byte) NetworkServerResponses.GamesList }
+                } }
+            };
             Database.ExecuteStoreQuery(
-                "SELECT * FROM partida WHERE ronda = 0", null,
+                "SELECT * FROM partida p WHERE ronda = 0 AND (" +
+                    "SELECT COUNT(idjugador) AS numPlayers FROM jugador WHERE idpartida = p.idpartida" +
+                ") < 4", null,
                 (results) => {
                     foreach (var row in results) {
                         Dictionary<string, object> gameData = new Dictionary<string, object>();
@@ -22,7 +28,11 @@ namespace DOSTServer {
         }
 
         public static List<Dictionary<string, object>> GetPlayersData(int idpartida) {
-            List<Dictionary<string, object>> playersData = new List<Dictionary<string, object>>();
+            List<Dictionary<string, object>> playersData = new List<Dictionary<string, object>>() {
+                { new Dictionary<string, object>() {
+                    { "code", (byte) NetworkServerResponses.GamePlayersList }
+                } }
+            };
             Database.ExecuteStoreQuery(
                 "SELECT * FROM jugador WHERE idpartida = @idpartida",
                 new Dictionary<string, object>() {

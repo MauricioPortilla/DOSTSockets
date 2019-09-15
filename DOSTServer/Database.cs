@@ -61,18 +61,52 @@ namespace DOSTServer {
                     onFail.Invoke(sqlException);
                 }
             } catch (Exception e) {
-				Console.WriteLine("EXCEPTION ERROR CQ -> " + e.Message.ToString());
+				Console.WriteLine("Exception -> " + e.Message.ToString());
                 if (onFail != null) {
                     onFail.Invoke(e);
                 }
-            }
-            if (sql.State == System.Data.ConnectionState.Open) {
-                sql.Close();
+            } finally {
+                if (sql.State == System.Data.ConnectionState.Open) {
+                    sql.Close();
+                }
             }
             return false;
         }
 
-		public static List<DatabaseStruct.SSQLRow> ExecuteStoreQuery(
+        public static bool ExecuteUpdate(string query, Dictionary<string, object> queryArguments, out int lastInsertedId, Action<Exception> onFail = null) {
+            try {
+                sql.Open();
+                SqlDataAdapter command = new SqlDataAdapter {
+                    InsertCommand = new SqlCommand(query, sql)
+                };
+                if (queryArguments != null) {
+                    foreach (var queryArgument in queryArguments) {
+                        command.InsertCommand.Parameters.AddWithValue(queryArgument.Key, queryArgument.Value);
+                    }
+                }
+                lastInsertedId = (int) command.InsertCommand.ExecuteScalar();
+                sql.Close();
+                return true;
+            } catch (SqlException sqlException) {
+                Console.WriteLine("SQLException -> " + sqlException.Message);
+                if (onFail != null) {
+                    onFail.Invoke(sqlException);
+                }
+            } catch (Exception e) {
+                Console.WriteLine("Exception -> " + e.Message.ToString());
+                if (onFail != null) {
+                    onFail.Invoke(e);
+                }
+            } finally {
+                if (sql.State == System.Data.ConnectionState.Open) {
+                    sql.Close();
+                }
+            }
+            lastInsertedId = 0;
+            return false;
+        }
+
+        public static List<DatabaseStruct.SSQLRow> ExecuteStoreQuery(
 			string query, Dictionary<string, object> queryArguments, 
 			Action<List<DatabaseStruct.SSQLRow>> action, Func<bool> zeroResults = null
 		) {
@@ -113,7 +147,7 @@ namespace DOSTServer {
 			} catch (SqlException sqlException) {
                 Console.WriteLine("SQLException -> " + sqlException.Message);
             } catch (Exception e) {
-                Console.WriteLine("EXCEPTION ERROR SQ -> " + e.Message.ToString());
+                Console.WriteLine("Exception -> " + e.Message.ToString());
             }
             if (sql.State == System.Data.ConnectionState.Open) {
                 sql.Close();

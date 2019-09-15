@@ -15,7 +15,9 @@ namespace DOSTServer {
         GetAccountData = 0x04,
         GetGamePlayers = 0x05,
         JoinGame = 0x06,
-        SendChatMessage = 0x07
+        SendChatMessage = 0x07,
+        LeaveGame = 0x08,
+        CreateGame = 0x09
     }
     enum NetworkServerResponses { // 50 en adelante
         LoginError = 0x33,
@@ -23,7 +25,15 @@ namespace DOSTServer {
         RegisterSuccess = 0x35,
         AccountNotConfirmed = 0x36,
         PlayerJoined = 0x37,
-        ChatMessage = 0x38
+        ChatMessage = 0x38,
+        GamePlayersList = 0x39,
+        GamesList = 0x40,
+        PlayerLeft = 0x41,
+        PlayerLeaveError = 0x42,
+        KeepAlive = 0x43,
+        AccountData = 0x44,
+        GameCreated = 0x45,
+        CreateGameError = 0x46
     }
 
     class EngineNetwork {
@@ -44,6 +54,7 @@ namespace DOSTServer {
                 listener.Listen(MAX_NUMBER_CONNECTIONS);
                 
                 Console.WriteLine(">> Server is online.");
+                new Thread(KeepClientsAlive).Start();
                 while (true) {
                     Socket clientSocket = listener.Accept();
                     clients.Add(clientSocket, 0);
@@ -89,6 +100,12 @@ namespace DOSTServer {
                         break;
                     case (byte) NetworkClientRequests.SendChatMessage:
                         ClientSendChatMessageRequest(clientSocket, content);
+                        break;
+                    case (byte) NetworkClientRequests.LeaveGame:
+                        ClientLeaveGameRequest(clientSocket, content);
+                        break;
+                    case (byte) NetworkClientRequests.CreateGame:
+                        ClientCreateGameRequest(clientSocket, content);
                         break;
                 }
             }
@@ -154,12 +171,60 @@ namespace DOSTServer {
         private static void ClientSendChatMessageRequest(Socket clientSocket, List<string> content) {
             // [codigo, idpartida, usuario, mensaje]
             var playersData = PartidaNetwork.GetPlayersData(int.Parse(content[1]));
-            var chatMessagePackage = CreatePackage(new Dictionary<string, object>() {
-                { "code", (byte) NetworkServerResponses.ChatMessage }, { "username", content[2] }, { "message", content[3] }
+            var chatMessagePackage = CreatePackage(new List<Dictionary<string, object>>() {
+                { new Dictionary<string, object>() {
+                    { "code", (byte) NetworkServerResponses.ChatMessage }, { "username", content[2] }, { "message", content[3] }
+                } }
             });
+            playersData.RemoveAll(x => x.ContainsKey("code"));
             foreach (var playerData in playersData) {
                 if (clients.ContainsValue((int) playerData["idcuenta"])) {
                     Send(clients.FirstOrDefault(x => x.Value == (int) playerData["idcuenta"]).Key, chatMessagePackage);
+                }
+            }
+        }
+
+        private static void ClientLeaveGameRequest(Socket clientSocket, List<string> content) {
+            var serverResponse = (byte) NetworkServerResponses.PlayerLeft;
+            if (!CuentaNetwork.LeaveGame(int.Parse(content[1]), int.Parse(content[2]))) {
+                serverResponse = (byte) NetworkServerResponses.PlayerLeaveError;
+            }
+            Send(clientSocket, CreatePackage(new List<Dictionary<string, object>>() {
+                { new Dictionary<string, object>() {
+                    { "code", serverResponse }
+                } }
+            }));
+        }
+
+        private static void ClientCreateGameRequest(Socket clientSocket, List<string> content) {
+            var serverResponse = (byte) NetworkServerResponses.GameCreated;
+            if (!CuentaNetwork.CreateGame(int.Parse(content[1]))) {
+                serverResponse = (byte) NetworkServerResponses.CreateGameError;
+            }
+            Send(clientSocket, CreatePackage(new List<Dictionary<string, object>>() {
+                { new Dictionary<string, object>() {
+                    { "code", serverResponse }
+                } }
+            }));
+        }
+
+        private static void KeepClientsAlive() {
+            while (true) {
+                Thread.Sleep(500);
+                try {
+                    var clientsTemp = clients;
+                    foreach (var client in clientsTemp) {
+                        if (client.Value == 0) {
+                            continue;
+                        }
+                        Send(client.Key, CreatePackage(new List<Dictionary<string, object>>() {
+                            { new Dictionary<string, object>() {
+                                { "code", (byte) NetworkServerResponses.KeepAlive }
+                            } }
+                        }));
+                    }
+                } catch (InvalidOperationException) {
+
                 }
             }
         }

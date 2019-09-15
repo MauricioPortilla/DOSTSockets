@@ -61,6 +61,15 @@ namespace DOST.Properties {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a Debes confirmar tu cuenta para iniciar sesión. Verifica tu correo electrónico..
+        /// </summary>
+        public static string AccountNotConfirmedErrorText {
+            get {
+                return ResourceManager.GetString("AccountNotConfirmedErrorText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Mejores puntuaciones.
         /// </summary>
         public static string BestScoresButton {
@@ -106,7 +115,7 @@ namespace DOST.Properties {
         }
         
         /// <summary>
-        ///   Busca una cadena traducida similar a Monedas.
+        ///   Busca una cadena traducida similar a Monedas: .
         /// </summary>
         public static string CoinsText {
             get {
@@ -160,11 +169,29 @@ namespace DOST.Properties {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a Crear partida.
+        /// </summary>
+        public static string CreateGameButton {
+            get {
+                return ResourceManager.GetString("CreateGameButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Correo electrónico.
         /// </summary>
         public static string EmailText {
             get {
                 return ResourceManager.GetString("EmailText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Faltan campos por completar..
+        /// </summary>
+        public static string EmptyFieldsErrorText {
+            get {
+                return ResourceManager.GetString("EmptyFieldsErrorText", resourceCulture);
             }
         }
         
@@ -241,6 +268,15 @@ namespace DOST.Properties {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a Idioma cambiado. Reinicie el juego para aplicar los cambios..
+        /// </summary>
+        public static string LanguageChangedText {
+            get {
+                return ResourceManager.GetString("LanguageChangedText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Selección de letra.
         /// </summary>
         public static string LetterSelectionWindowTitle {
@@ -264,6 +300,15 @@ namespace DOST.Properties {
         public static string LoginButton {
             get {
                 return ResourceManager.GetString("LoginButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a No existe una cuenta registrada con estos datos..
+        /// </summary>
+        public static string LoginErrorText {
+            get {
+                return ResourceManager.GetString("LoginErrorText", resourceCulture);
             }
         }
         
@@ -331,7 +376,7 @@ namespace DOST.Properties {
         }
         
         /// <summary>
-        ///   Busca una cadena traducida similar a Posición.
+        ///   Busca una cadena traducida similar a Posición: .
         /// </summary>
         public static string RankText {
             get {

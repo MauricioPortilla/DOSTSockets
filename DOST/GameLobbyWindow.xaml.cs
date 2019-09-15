@@ -27,6 +27,7 @@ namespace DOST {
 
         public GameLobbyWindow(ref Partida partida) {
             InitializeComponent();
+            var th = Session.gameThreads;
             this.partida = partida;
             lobbyPlayersUsernameTextBlocks = new List<TextBlock>() {
                 playerOneUsernameTextBlock, playerTwoUsernameTextBlock,
@@ -44,20 +45,26 @@ namespace DOST {
                 playerOneRankTitleTextBlock, playerTwoRankTitleTextBlock,
                 playerThreeRankTitleTextBlock, playerFourRankTitleTextBlock
             };
-
-            Thread loadPlayersJoinedDataThread = new Thread(LoadPlayersJoinedData);
-            loadPlayersJoinedDataThread.Start();
-            /*Thread receiveChatMessagesThread = new Thread(ReceiveChatMessages);
-            receiveChatMessagesThread.Start();*/
+            /*Thread loadPlayersJoinedDataThread = new Thread(LoadPlayersJoinedData);
+            loadPlayersJoinedDataThread.Start();*/
         }
 
-        private void LoadPlayersJoinedData() {
-            Application.Current.Dispatcher.Invoke(delegate {
-                //while (true) {
-                    if (!partida.Jugadores.Find(x => x.Cuenta.Id == Session.Cuenta.Id).Anfitrion) {
-                        startGameButton.Content = Properties.Resources.ReadyButton;
+        public void LoadPlayersJoinedData() {
+            //while (true) {
+                Application.Current.Dispatcher.Invoke(delegate {
+                    if (partida.Jugadores.Count == 0) {
+                        return;
+                    }
+                    var anfitrion = partida.Jugadores.Find(x => x.Cuenta.Id == Session.Cuenta.Id);
+                    if (anfitrion != null) {
+                        if (!anfitrion.Anfitrion) {
+                            startGameButton.Content = Properties.Resources.ReadyButton;
+                        }
                     }
                     for (int index = 0; index < partida.Jugadores.Count; index++) {
+                        if (lobbyPlayersUsernameTextBlocks[index].Text == partida.Jugadores[index].Cuenta.Usuario) {
+                            continue;
+                        }
                         lobbyPlayersUsernameTextBlocks[index].Text = partida.Jugadores[index].Cuenta.Usuario;
                         lobbyPlayersTypeTextBlocks[index].Text = partida.Jugadores[index].Anfitrion ?
                             Properties.Resources.HostPlayerText : Properties.Resources.PlayerText;
@@ -65,33 +72,49 @@ namespace DOST {
                         lobbyPlayersRankTextBlocks[index].Visibility = Visibility.Visible;
                         lobbyPlayersRankTitleTextBlocks[index].Visibility = Visibility.Visible;
                     }
+                    var countPlayers = lobbyPlayersUsernameTextBlocks.Count(x => !string.IsNullOrWhiteSpace(x.Text));
+                    if (partida.Jugadores.Count < countPlayers) {
+                        for (int index = countPlayers; index < MAX_NUMBER_OF_PLAYERS; index++) {
+                            lobbyPlayersUsernameTextBlocks[index].Text = "...";
+                            lobbyPlayersTypeTextBlocks[index].Text = Properties.Resources.WaitingForPlayerText;
+                            // lobbyPlayersRankTextBlocks[index].Text = "#0";
+                            lobbyPlayersRankTextBlocks[index].Visibility = Visibility.Hidden;
+                            lobbyPlayersRankTitleTextBlocks[index].Visibility = Visibility.Hidden;
+                        }
+                    }
                     if (partida.Jugadores.Count == MAX_NUMBER_OF_PLAYERS) {
                         lobbyStatusTextBlock.Text = "";
                     } else {
                         lobbyStatusTextBlock.Text = Properties.Resources.WaitingForPlayersText;
                     }
-                //}
-            });
+                });
+            //}
         }
 
-        private void ReceiveChatMessages() {
-            while (true) {
-                var messagePackage = EngineNetwork.ReceiveAsDictionary();
-                if (!messagePackage.ContainsKey("code")) {
-                    continue;
-                }
-                if (byte.Parse(messagePackage["code"]) == (byte) NetworkServerResponses.ChatMessage) {
-                    Application.Current.Dispatcher.Invoke(delegate {
-                        chatListBox.Items.Add(new TextBlock() {
-                            Text = messagePackage["username"] + ": " + messagePackage["message"]
-                        });
+        public void ReceiveChatMessages() {
+            var messagePackage = EngineNetwork.ReceiveMultipleData();
+            if (messagePackage.Count == 0) {
+                return;
+            }
+            var message = messagePackage[0];
+            if (!message.ContainsKey("code")) {
+                return;
+            }
+            if (byte.Parse(message["code"]) == (byte) NetworkServerResponses.ChatMessage) {
+                Application.Current.Dispatcher.Invoke(delegate {
+                    chatListBox.Items.Add(new TextBlock() {
+                        Text = message["username"] + ": " + message["message"]
                     });
-                }
+                });
             }
         }
 
         private void ExitButton_Click(object sender, RoutedEventArgs e) {
-
+            if (Session.Cuenta.LeaveGame(partida)) {
+                Session.GameLobbyWindow = null;
+                Session.MainMenu.Show();
+                Close();
+            }
         }
 
         private void StartGameButton_Click(object sender, RoutedEventArgs e) {

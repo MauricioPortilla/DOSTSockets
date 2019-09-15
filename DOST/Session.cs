@@ -18,15 +18,20 @@ namespace DOST {
             get { return cuenta; }
             set { cuenta = value; }
         }
+        private static LoginWindow login;
+        public static LoginWindow Login {
+            get { return login; }
+            set { login = value; }
+        }
         private static MainMenuWindow mainMenu;
         public static MainMenuWindow MainMenu {
             get { return mainMenu; }
             set { mainMenu = value; }
         }
-        private static LoginWindow login;
-        public static LoginWindow Login {
-            get { return login; }
-            set { login = value; }
+        private static GameLobbyWindow gameLobbyWindow;
+        public static GameLobbyWindow GameLobbyWindow {
+            get { return gameLobbyWindow; }
+            set { gameLobbyWindow = value; }
         }
         private static readonly ObservableCollection<Partida> gamesList = new ObservableCollection<Partida>();
         public static ObservableCollection<Partida> GamesList {
@@ -34,19 +39,36 @@ namespace DOST {
                 return gamesList;
             }
         }
+        public static Thread gameThreads = new Thread(GameThreads);
 
-        public static void ChangeLanguage(string language) {
-            var culture = new CultureInfo(language);
-            CultureInfo.DefaultThreadCurrentCulture = culture;
-            CultureInfo.DefaultThreadCurrentUICulture = culture;
+        public static void GameThreads() {
+            while (true) {
+                if (mainMenu != null) {
+                    GetGamesList();
+                    mainMenu.JoinGameIfNeeded();
+                }
+                if (gameLobbyWindow != null) {
+                    gameLobbyWindow.LoadPlayersJoinedData();
+                    gameLobbyWindow.ReceiveChatMessages();
+                }
+            }
         }
 
         public static void GetGamesList() {
-            while (cuenta != null) {
+            if (cuenta != null) {
                 EngineNetwork.Send(EngineNetwork.CreatePackage(new object[] {
                     (byte) NetworkClientRequests.GetGames
                 }));
                 var gamesPackage = EngineNetwork.ReceiveMultipleData();
+                if (gamesPackage.Count == 0) {
+                    return;
+                }
+                if (!gamesPackage[0].ContainsKey("code")) {
+                    return;
+                } else if (byte.Parse(gamesPackage[0]["code"]) != (byte) NetworkServerResponses.GamesList) {
+                    return;
+                }
+                gamesPackage.RemoveAll(x => x.ContainsKey("code"));
                 foreach (var gamePackage in gamesPackage) {
                     System.Windows.Application.Current.Dispatcher.Invoke(delegate {
                         if (!GamesList.ToList().Exists(x => x.Id == int.Parse(gamePackage["idpartida"]))) {
@@ -62,6 +84,16 @@ namespace DOST {
                         }
                     });
                 }
+                List<Partida> gamesToRemove = new List<Partida>();
+                foreach (var game in GamesList) {
+                    var checkGame = gamesPackage.ToList().Find(x => int.Parse(x["idpartida"]) == game.Id);
+                    if (checkGame == null) {
+                        gamesToRemove.Add(game);
+                    }
+                }
+                System.Windows.Application.Current.Dispatcher.Invoke(delegate {
+                    gamesToRemove.ForEach(x => GamesList.Remove(x));
+                });
             }
         }
 

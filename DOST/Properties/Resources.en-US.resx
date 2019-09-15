@@ -130,7 +130,7 @@
     <value>Categories</value>
   </data>
   <data name="CoinsText" xml:space="preserve">
-    <value>Coins</value>
+    <value>Coins: </value>
   </data>
   <data name="ConfigurationButton" xml:space="preserve">
     <value>Configuration</value>
@@ -205,7 +205,7 @@
     <value>Player</value>
   </data>
   <data name="RankText" xml:space="preserve">
-    <value>Rank</value>
+    <value>Rank: </value>
   </data>
   <data name="ReadyButton" xml:space="preserve">
     <value>Ready</value>
@@ -245,5 +245,17 @@
   </data>
   <data name="ChatWelcomeText" xml:space="preserve">
     <value>Welcome to DOST's lobby chat!</value>
+  </data>
+  <data name="AccountNotConfirmedErrorText" xml:space="preserve">
+    <value>You must confirm your account to log in. Verify your e-mail address.</value>
+  </data>
+  <data name="LanguageChangedText" xml:space="preserve">
+    <value>Language changed. Restart the game to apply changes.</value>
+  </data>
+  <data name="LoginErrorText" xml:space="preserve">
+    <value>There's no account registered with this data.</value>
+  </data>
+  <data name="CreateGameButton" xml:space="preserve">
+    <value>Create game</value>
   </data>
 </root>

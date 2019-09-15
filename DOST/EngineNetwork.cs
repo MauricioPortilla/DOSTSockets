@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace DOST {
     enum NetworkClientRequests { // 0 a 50
@@ -17,7 +18,9 @@ namespace DOST {
         GetAccountData = 0x04,
         GetGamePlayers = 0x05,
         JoinGame = 0x06,
-        SendChatMessage = 0x07
+        SendChatMessage = 0x07,
+        LeaveGame = 0x08,
+        CreateGame = 0x09
     }
     enum NetworkServerResponses { // 50 en adelante
         LoginError = 0x33,
@@ -25,11 +28,20 @@ namespace DOST {
         RegisterSuccess = 0x35,
         AccountNotConfirmed = 0x36,
         PlayerJoined = 0x37,
-        ChatMessage = 0x38
+        ChatMessage = 0x38,
+        GamePlayersList = 0x39,
+        GamesList = 0x40,
+        PlayerLeft = 0x41,
+        PlayerLeaveError = 0x42,
+        KeepAlive = 0x43,
+        AccountData = 0x44,
+        GameCreated = 0x45,
+        CreateGameError = 0x46
     }
 
     class EngineNetwork {
         private static Socket sender;
+
         public static void EstablishConnection() {
             try {
                 IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());

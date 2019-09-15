@@ -21,23 +21,22 @@ namespace DOST {
     /// Lógica de interacción para MainMenuWindow.xaml
     /// </summary>
     public partial class MainMenuWindow : Window {
-        private ObservableCollection<Partida> _gamesList = Session.GamesList;
-        private Thread gamesListThread;
+        private ObservableCollection<Partida> gamesList = Session.GamesList;
         public ObservableCollection<Partida> GamesList {
             get {
-                return _gamesList;
+                return gamesList;
             }
         }
+        private bool didCreateGame = false;
 
         public MainMenuWindow() {
             DataContext = this;
             InitializeComponent();
             usernameTextBlock.Text = Session.Cuenta.Usuario;
-            coinsTextBlock.Text = " " + Session.Cuenta.Monedas.ToString();
+            coinsTextBlock.Text = Session.Cuenta.Monedas.ToString();
             // rankTextBlock.Text = Session.Cuenta.GetRank();
-            gamesListThread = new Thread(Session.GetGamesList);
-            gamesListThread.Start();
             GamesList.CollectionChanged += GamesList_CollectionChanged;
+            Session.gameThreads.Start();
         }
 
         void GamesList_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
@@ -50,10 +49,9 @@ namespace DOST {
             }
             var selectedGame = (Partida) gamesListView.SelectedItem;
             if (Session.Cuenta.JoinGame(selectedGame)) {
-                GameLobbyWindow gameLobby = new GameLobbyWindow(ref selectedGame);
-                gameLobby.Show();
-                gamesListThread.Abort();
-                Close();
+                Session.GameLobbyWindow = new GameLobbyWindow(ref selectedGame);
+                Session.GameLobbyWindow.Show();
+                Hide();
             }
         }
 
@@ -67,6 +65,38 @@ namespace DOST {
             Session.MainMenu = null;
             Session.Login.Show();
             Close();
+        }
+
+        private void CreateGameButton_Click(object sender, RoutedEventArgs e) {
+            if (!Session.Cuenta.CreateGame()) {
+                MessageBox.Show("Error al crear la partida");
+                return;
+            }
+            didCreateGame = true;
+        }
+
+        public void JoinGameIfNeeded() {
+            Application.Current.Dispatcher.Invoke(delegate {
+                if (!didCreateGame) {
+                    return;
+                }
+                Partida game = Session.GamesList.ToList().Find(
+                    x => x.Jugadores.Find(j => j.Cuenta.Id == Session.Cuenta.Id) != null
+                );
+                if (game == null) {
+                    return;
+                }
+                didCreateGame = false;
+                Session.GameLobbyWindow = new GameLobbyWindow(ref game);
+                Session.GameLobbyWindow.Show();
+                Hide();
+            });
+        }
+
+        private void WindowHeader_MouseDown(object sender, MouseButtonEventArgs e) {
+            if (e.ChangedButton == MouseButton.Left) {
+                DragMove();
+            }
         }
     }
 }

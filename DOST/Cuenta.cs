@@ -25,7 +25,17 @@ namespace DOST {
             EngineNetwork.Send(EngineNetwork.CreatePackage(new object[] {
                 (byte) NetworkClientRequests.GetAccountData, id
             }));
-            var accountData = EngineNetwork.ReceiveAsDictionary();
+            var package = EngineNetwork.ReceiveMultipleData();
+            if (package.Count < 1) {
+                return;
+            }
+            if (!package[0].ContainsKey("code")) {
+                return;
+            } else if (byte.Parse(package[0]["code"]) != (byte) NetworkServerResponses.AccountData) {
+                return;
+            }
+            package.RemoveAll(x => x.ContainsKey("code"));
+            var accountData = package[0];
             if (accountData.Count > 0) {
                 id = int.Parse(accountData["idcuenta"]);
                 usuario = accountData["usuario"];
@@ -133,6 +143,39 @@ namespace DOST {
                 (byte) NetworkClientRequests.SendChatMessage, game.Id, usuario, message
             });
             EngineNetwork.Send(sendChatMessageRequest);
+        }
+
+        public bool LeaveGame(Partida game) {
+            EngineNetwork.Send(EngineNetwork.CreatePackage(new object[] {
+                (byte) NetworkClientRequests.LeaveGame, id, game.Id
+            }));
+            var packageReceived = EngineNetwork.ReceiveMultipleData();
+            if (packageReceived.Count == 0) {
+                return false;
+            } else if (packageReceived.Count == 1) {
+                if (byte.Parse(packageReceived[0]["code"]) != (byte) NetworkServerResponses.PlayerLeft) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public bool CreateGame() {
+            if (Session.GamesList.ToList().Find(x => x.Jugadores.Find(p => p.Cuenta.id == id) != null) != null) {
+                return false;
+            }
+            EngineNetwork.Send(EngineNetwork.CreatePackage(new object[] {
+                (byte) NetworkClientRequests.CreateGame, id
+            }));
+            var packageReceived = EngineNetwork.ReceiveMultipleData();
+            if (packageReceived.Count == 0) {
+                return false;
+            } else if (packageReceived.Count == 1) {
+                if (byte.Parse(packageReceived[0]["code"]) != (byte) NetworkServerResponses.GameCreated) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

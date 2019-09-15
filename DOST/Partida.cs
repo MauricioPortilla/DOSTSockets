@@ -38,7 +38,10 @@ namespace DOST {
             this.fecha = fecha;
             jugadores = new List<Jugador>();
             LoadJugadores();
-            Nombre = "Partida de " + jugadores.Find(x => x.Anfitrion == true).Cuenta.Usuario;
+            var anfitrion = jugadores.Find(x => x.Anfitrion == true);
+            if (anfitrion != null) {
+                Nombre = "Partida de " + anfitrion.Cuenta.Usuario;
+            }
         }
 
         public void LoadJugadores() {
@@ -47,6 +50,15 @@ namespace DOST {
                 (byte) NetworkClientRequests.GetGamePlayers, id
             }));
             List<Dictionary<string, string>> players = EngineNetwork.ReceiveMultipleData();
+            if (players.Count == 0) {
+                return;
+            }
+            if (!players[0].ContainsKey("code")) {
+                return;
+            } else if (byte.Parse(players[0]["code"]) != (byte) NetworkServerResponses.GamePlayersList) {
+                return;
+            }
+            players.RemoveAll(x => x.ContainsKey("code"));
             foreach (var player in players) {
                 jugadores.Add(new Jugador(
                     int.Parse(player["idjugador"]), 

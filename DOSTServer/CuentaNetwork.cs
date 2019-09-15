@@ -126,17 +126,24 @@ namespace DOSTServer {
             }
         }
 
-        public static Dictionary<string, object> GetAccountData(int idcuenta) {
-            var accountData = new Dictionary<string, object>();
+        public static List<Dictionary<string, object>> GetAccountData(int idcuenta) {
+            //var accountData = new Dictionary<string, object>();
+            var accountData = new List<Dictionary<string, object>>() {
+                { new Dictionary<string, object>() {
+                    { "code", (byte) NetworkServerResponses.AccountData }
+                } }
+            };
             Database.ExecuteStoreQuery(
                 "SELECT * FROM cuenta WHERE idcuenta = @idcuenta",
                 new Dictionary<string, object>() {
                     { "@idcuenta", idcuenta }
                 }, (results) => {
                     var row = results[0];
+                    Dictionary<string, object> data = new Dictionary<string, object>();
                     foreach (var columnData in row.Columns) {
-                        accountData.Add(columnData.Key, columnData.Value);
+                        data.Add(columnData.Key, columnData.Value);
                     }
+                    accountData.Add(data);
                 }
             );
             return accountData;
@@ -152,14 +159,62 @@ namespace DOSTServer {
             );
         }
 
-        public static void JoinGame(int idcuenta, int idpartida, bool anfitrion) {
-            Database.ExecuteUpdate(
+        public static bool JoinGame(int idcuenta, int idpartida, bool anfitrion) {
+            return Database.ExecuteUpdate(
                 "INSERT INTO jugador VALUES (@idcuenta, @idpartida, 0, @anfitrion)",
                 new Dictionary<string, object>() {
                     { "@idcuenta", idcuenta }, { "@idpartida", idpartida },
                     { "@anfitrion", (anfitrion == true) ? 1 : 0 }
                 }
             );
+        }
+
+        public static bool LeaveGame(int idcuenta, int idpartida) {
+            var players = PartidaNetwork.GetPlayersData(idpartida);
+            players.RemoveAll(x => x.ContainsKey("code"));
+            var player = players.Find(x => (int) x["idcuenta"] == idcuenta);
+            if (player == null) {
+                return false;
+            }
+            return Database.ExecuteUpdate(
+                "IF EXISTS (SELECT idjugador FROM jugador WHERE idjugador = @idjugador AND idpartida = @idpartida AND anfitrion = 1) " +
+                "BEGIN " +
+                    "DELETE FROM jugador WHERE idjugador = @idjugador AND idpartida = @idpartida; " +
+                    "IF NOT EXISTS (SELECT TOP(1) idjugador FROM jugador WHERE idpartida = @idpartida) " +
+                    "BEGIN " +
+                        "DELETE FROM partida WHERE idpartida = @idpartida; " +
+                    "END " +
+                    "ELSE " +
+                    "BEGIN " +
+                        "UPDATE TOP(1) jugador SET anfitrion = 1 WHERE idpartida = @idpartida; " +
+                    "END " +
+                "END " +
+                "ELSE IF EXISTS (SELECT idjugador FROM jugador WHERE idjugador = @idjugador AND idpartida = @idpartida) " +
+                "BEGIN " +
+                    "DELETE FROM jugador WHERE idjugador = @idjugador AND idpartida = @idpartida; " +
+                    "IF NOT EXISTS (SELECT TOP(1) idjugador FROM jugador WHERE idpartida = @idpartida) " +
+                    "BEGIN " +
+                        "DELETE FROM partida WHERE idpartida = @idpartida; " +
+                    "END " +
+                "END",
+                new Dictionary<string, object>() {
+                    { "@idjugador", (int) player["idjugador"] },
+                    { "@idpartida", idpartida }
+                }
+            );
+        }
+
+        public static bool CreateGame(int idcuenta) {
+            int idpartida = 0;
+            if (Database.ExecuteUpdate(
+                "INSERT INTO partida OUTPUT INSERTED.idpartida VALUES (0, @fecha)",
+                new Dictionary<string, object>() {
+                    { "@fecha", DateTime.Now }
+                }, out idpartida
+            )) {
+                return JoinGame(idcuenta, idpartida, true);
+            }
+            return false;
         }
     }
 }
